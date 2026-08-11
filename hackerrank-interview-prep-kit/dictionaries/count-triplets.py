@@ -11,23 +11,21 @@ def countTriplets(arr, r):
     right_map = Counter(arr)
     total = 0
 
-    if len(right_map) == 1 and r == 1:
-        k = next(iter(right_map))
-        return math.comb(right_map[k], 3)
-    
     for x in arr:
-        if x % r == 0:
-            total += left_map[x/r] * right_map[x*r]
-        
-        left_map[x] += 1
         right_map[x] -= 1
     
+        if x % r == 0:
+            total += left_map[x//r] * right_map[x*r]
+        
+        left_map[x] += 1
+
     return total
 
 if __name__ == '__main__':
-    arr = [int(x) for x in "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1".split(" ")] 
+    fptr = sys.stdin
 
-    r = 1 
+    n, r = map(int, fptr.readline().rstrip().split())
+    arr = list(map(int, fptr.readline().rstrip().split()))
 
     ans = countTriplets(arr, r)
 
