@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 
 
 def find_script(name):
@@ -72,16 +73,30 @@ def main():
         with open(input_path) as f:
             data = f.read()
 
+        env = os.environ.copy()
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".out", delete=False) as tmp:
+            output_tmp = tmp.name
+        env["OUTPUT_PATH"] = output_tmp
+
         result = subprocess.run(
             [sys.executable, script_path],
             input=data,
             capture_output=True,
             text=True,
+            env=env,
         )
+
+        output_text = ""
+        if os.path.isfile(output_tmp):
+            with open(output_tmp) as f:
+                output_text = f.read()
+            os.unlink(output_tmp)
+
+        actual = result.stdout + output_text
 
         output_path = find_output(script_dir, base, name)
         if output_path:
-            ok = result.returncode == 0 and compare(output_path, result.stdout)
+            ok = result.returncode == 0 and compare(output_path, actual)
             status = "PASS" if ok else "FAIL"
             print(f"=== {name} [{status}] ===")
             if not ok:
@@ -94,14 +109,14 @@ def main():
                     print("diff:")
                     subprocess.run(
                         ["diff", output_path, "-"],
-                        input=result.stdout,
+                        input=actual,
                         text=True,
                         check=False,
                     )
             print()
         else:
             print(f"=== {name} (no expected output file) ===")
-            print(result.stdout, end="")
+            print(actual, end="")
             if result.stderr:
                 print(result.stderr, end="")
             if result.returncode != 0:
